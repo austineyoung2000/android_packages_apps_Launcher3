@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.android.launcher3.R;
+import com.android.launcher3.LauncherPrefs;
 import com.android.systemui.shared.recents.model.Task;
 
 /** A task-card navigator. Each entry represents a card, not an application package. */
@@ -44,6 +45,12 @@ public class RecentsIconScrollView extends HorizontalScrollView {
 
     private int dp(float value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        if (h != oldh) scheduleRefresh();
     }
 
     private Drawable taskIcon(Task task) {
@@ -74,6 +81,9 @@ public class RecentsIconScrollView extends HorizontalScrollView {
             entry.setClickable(true);
             StringBuilder label = new StringBuilder();
             int count = Math.min(card.getTaskContainers().size(), 2);
+            int requestedSize = Math.max(20, Math.min(64,
+                    LauncherPrefs.RECENTS_SHORTCUT_ICON_SIZE.get(getContext())));
+            int singleSize = Math.min(dp(requestedSize), Math.max(dp(20), getHeight() - dp(8)));
             int iconIndex = 0;
             for (TaskContainer container : card.getTaskContainers()) {
                 if (iconIndex++ >= count) break;
@@ -86,15 +96,24 @@ public class RecentsIconScrollView extends HorizontalScrollView {
                 ImageView icon = new ImageView(getContext());
                 icon.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
                 icon.setImageDrawable(taskIcon(task));
-                int size = dp(count > 1 ? 22 : 32);
+                int size = count > 1 ? Math.min(dp(32), singleSize * 2 / 3) : singleSize;
                 entry.addView(icon, new LinearLayout.LayoutParams(size, size));
             }
             entry.setContentDescription(label);
             entry.setOnClickListener(v -> {
                 int page = mRecents.indexOfChild(card);
-                if (page >= 0) mRecents.snapToPage(page, 200);
+                if (page >= 0) {
+                    if (mRecents instanceof LauncherRecentsView) {
+                        ((LauncherRecentsView) mRecents).showShortcutCard(card);
+                    }
+                    mRecents.snapToPage(page, 200);
+                }
             });
-            mRow.addView(entry, new LinearLayout.LayoutParams(dp(count > 1 ? 56 : 48), dp(48)));
+            int entryWidth = Math.max(dp(48), count > 1
+                    ? Math.min(dp(32), singleSize * 2 / 3) * 2 + dp(8)
+                    : singleSize + dp(8));
+            mRow.addView(entry, new LinearLayout.LayoutParams(entryWidth,
+                    LinearLayout.LayoutParams.MATCH_PARENT));
         }
         updateSelected();
     }

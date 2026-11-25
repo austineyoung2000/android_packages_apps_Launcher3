@@ -50,6 +50,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 
 import com.android.launcher3.DeviceProfile;
+import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.R;
 import com.android.launcher3.display.DisplayController;
 import com.android.launcher3.statehandlers.DesktopVisibilityController;
@@ -390,6 +391,10 @@ public abstract class BaseContainerInterface<STATE_TYPE extends BaseState<STATE_
         } else {
             Resources res = context.getResources();
             float maxScale = res.getFloat(R.dimen.overview_max_scale);
+            if (dp.getLauncherPrefs().get(LauncherPrefs.RECENTS_ICON_SHORTCUTS)) {
+                maxScale = Math.max(40, Math.min(70,
+                        dp.getLauncherPrefs().get(LauncherPrefs.RECENTS_CARD_SIZE))) / 100f;
+            }
             int taskMargin = dp.getOverviewProfile().getTaskMarginPx();
             // In fake orientation, OverviewActions is hidden and we only leave a margin there.
             int overviewActionsClaimedSpace = orientationHandler.isLayoutNaturalToLauncher()
@@ -411,6 +416,10 @@ public abstract class BaseContainerInterface<STATE_TYPE extends BaseState<STATE_
     private void calculateLargeTileSize(Context context, DeviceProfile dp, Rect outRect) {
         Resources res = context.getResources();
         float maxScale = res.getFloat(R.dimen.overview_max_scale);
+        if (dp.getLauncherPrefs().get(LauncherPrefs.RECENTS_ICON_SHORTCUTS)) {
+            maxScale = Math.max(40, Math.min(70,
+                    dp.getLauncherPrefs().get(LauncherPrefs.RECENTS_CARD_SIZE))) / 100f;
+        }
         Rect gridRect = new Rect();
         calculateGridSize(dp, gridRect);
         calculateTaskSizeInternal(dp, gridRect, maxScale, Gravity.CENTER, outRect);

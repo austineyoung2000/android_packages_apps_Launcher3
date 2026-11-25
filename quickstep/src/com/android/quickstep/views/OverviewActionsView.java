@@ -26,6 +26,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -410,6 +411,10 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
             mLens = prefs.getBoolean(key, false);
         }
         updateVisibilities();
+        if (LauncherPrefs.RECENTS_SHORTCUT_ICON_SIZE.getSharedPrefKey().equals(key)) {
+            RecentsIconScrollView row = findViewById(R.id.recents_icon_scroll);
+            if (row != null) row.scheduleRefresh();
+        }
     }
 
     public void updateHiddenFlags(@ActionsHiddenFlags int visibilityFlags, boolean enable) {
@@ -584,7 +589,7 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
         if (clearAllRow == null || clearAllRow.getVisibility() == GONE) {
             return 0;
         }
-        return getResources().getDimensionPixelSize(R.dimen.overview_actions_height)
+        return clearAllRow.getLayoutParams().height
                 + getResources().getDimensionPixelSize(R.dimen.overview_actions_button_spacing);
     }
 
@@ -613,6 +618,17 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
     public void updateDimension(DeviceProfile dp, Rect taskSize) {
         mDp = dp;
         mTaskSize.set(taskSize);
+        View iconContainer = findViewById(R.id.recents_icon_container);
+        if (iconContainer != null) {
+            int minHeight = getResources().getDimensionPixelSize(R.dimen.overview_actions_height);
+            int maxHeight = Math.round(96 * getResources().getDisplayMetrics().density);
+            int spacing = getResources().getDimensionPixelSize(R.dimen.overview_actions_button_spacing);
+            int available = dp.getDeviceProperties().getHeightPx() - taskSize.bottom
+                    - dp.getOverviewActionsClaimedSpaceBelow() - minHeight - spacing;
+            ViewGroup.LayoutParams params = iconContainer.getLayoutParams();
+            params.height = Math.max(minHeight, Math.min(maxHeight, available));
+            iconContainer.setLayoutParams(params);
+        }
         updateVerticalMargin(DisplayController.getNavigationMode(getContext()));
         updateForIsTablet();
 

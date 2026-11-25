@@ -28,12 +28,14 @@ import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.Nullable;
 
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherState;
+import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.desktop.DesktopRecentsTransitionController;
 import com.android.launcher3.logging.StatsLogManager;
 import com.android.launcher3.statehandlers.DepthController;
@@ -59,6 +61,103 @@ import kotlin.Unit;
 @TargetApi(Build.VERSION_CODES.O)
 public class LauncherRecentsView extends RecentsView<QuickstepLauncher, LauncherState>
         implements StateListener<LauncherState> {
+
+    private boolean mShortcutPreviewMode;
+    private boolean mShortcutPreviewPreparing;
+    private int mShortcutPreviewGeneration;
+    private TaskView mShortcutPreviewCard;
+    private final Runnable mHideShortcutPreview = new Runnable() {
+        @Override
+        public void run() {
+            if (!mShortcutPreviewMode) return;
+            if (isHandlingTouch()) {
+                postDelayed(this, 300);
+                return;
+            }
+            mShortcutPreviewCard = null;
+            updateShortcutCardVisibility();
+        }
+    };
+
+    private boolean shortcutAutoHideEnabled() {
+        return LauncherPrefs.RECENTS_ICON_SHORTCUTS.get(mContainer)
+                && LauncherPrefs.RECENTS_CARD_AUTO_HIDE.get(mContainer);
+    }
+
+    private void updateShortcutCardVisibility() {
+        for (TaskView card : getTaskViews()) {
+            card.setShortcutPreviewAlpha(!mShortcutPreviewMode || card == mShortcutPreviewCard
+                    ? 1f : 0f);
+        }
+    }
+
+    private void resetShortcutPreview() {
+        ++mShortcutPreviewGeneration;
+        removeCallbacks(mHideShortcutPreview);
+        mShortcutPreviewPreparing = false;
+        mShortcutPreviewMode = false;
+        mShortcutPreviewCard = null;
+        updateShortcutCardVisibility();
+    }
+
+    private void prepareShortcutPreview() {
+        if (!shortcutAutoHideEnabled() || !mContainer.isInState(OVERVIEW)) {
+            resetShortcutPreview();
+            return;
+        }
+        if (mShortcutPreviewMode || mShortcutPreviewPreparing || isGestureActive()) return;
+        mShortcutPreviewPreparing = true;
+        final int generation = ++mShortcutPreviewGeneration;
+        Runnable hideCards = () -> {
+            if (generation != mShortcutPreviewGeneration) return;
+            mShortcutPreviewPreparing = false;
+            if (!shortcutAutoHideEnabled() || !mContainer.isInState(OVERVIEW)) return;
+            mShortcutPreviewMode = true;
+            TaskView pendingCard = mShortcutPreviewCard;
+            mShortcutPreviewCard = null;
+            if (pendingCard != null && indexOfChild(pendingCard) >= 0) {
+                showShortcutCard(pendingCard);
+            } else {
+                updateShortcutCardVisibility();
+            }
+        };
+        if (getEnableDrawingLiveTile()) {
+            switchToScreenshot(() -> finishRecentsAnimation(true, false, hideCards));
+        } else {
+            hideCards.run();
+        }
+    }
+
+    public void showShortcutCard(TaskView card) {
+        if (mShortcutPreviewPreparing) {
+            mShortcutPreviewCard = card;
+            return;
+        }
+        if (!mShortcutPreviewMode) return;
+        removeCallbacks(mHideShortcutPreview);
+        mShortcutPreviewCard = card;
+        updateShortcutCardVisibility();
+        int seconds = Math.max(1, Math.min(15,
+                LauncherPrefs.RECENTS_PREVIEW_SECONDS.get(mContainer)));
+        postDelayed(mHideShortcutPreview, seconds * 1000L);
+    }
+
+    @Override
+    public void onViewAdded(View child) {
+        super.onViewAdded(child);
+        if (child instanceof TaskView && mShortcutPreviewMode) {
+            ((TaskView) child).setShortcutPreviewAlpha(0f);
+        }
+    }
+
+    @Override
+    public void onViewRemoved(View child) {
+        if (child == mShortcutPreviewCard) {
+            removeCallbacks(mHideShortcutPreview);
+            mShortcutPreviewCard = null;
+        }
+        super.onViewRemoved(child);
+    }
 
     public LauncherRecentsView(Context context) {
         this(context, null);
@@ -142,6 +241,7 @@ public class LauncherRecentsView extends RecentsView<QuickstepLauncher, Launcher
 
     @Override
     public void onStateTransitionStart(LauncherState toState) {
+        if (toState != OVERVIEW) resetShortcutPreview();
         setOverviewStateEnabled(toState.isRecentsViewVisible);
 
         if (toState.displayOverviewTasksAsGrid(mContainer.getDeviceProfile())) {
@@ -167,6 +267,7 @@ public class LauncherRecentsView extends RecentsView<QuickstepLauncher, Launcher
 
     @Override
     public void onStateTransitionComplete(LauncherState finalState) {
+        if (finalState == OVERVIEW) prepareShortcutPreview();
         mUtils.onStateTransitionComplete(finalState);
         DesktopVisibilityController.INSTANCE.get(mContainer).onLauncherStateChanged(
                 mContainer.getDisplayId(), finalState);
@@ -272,6 +373,7 @@ public class LauncherRecentsView extends RecentsView<QuickstepLauncher, Launcher
             showDesktopApps = true;
         }
         super.onGestureAnimationEnd();
+        prepareShortcutPreview();
         if (showDesktopApps) {
             SystemUiProxy.INSTANCE.get(mContainer).showDesktopApps(mContainer.getDisplayId(),
                     /* transition */ null, /* taskIdToReorderToFront */ null,

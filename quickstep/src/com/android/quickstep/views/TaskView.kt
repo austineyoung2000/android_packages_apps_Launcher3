@@ -498,6 +498,17 @@ constructor(
 
     private val taskViewAlpha = MultiValueAlpha(this, Alpha.entries.size)
     protected var stableAlpha by MultiPropertyDelegate(taskViewAlpha, Alpha.Stable)
+    private var shortcutPreviewAlphaValue by MultiPropertyDelegate(taskViewAlpha, Alpha.ShortcutPreview)
+    var shortcutPreviewAlpha: Float
+        get() = shortcutPreviewAlphaValue
+        set(value) {
+            shortcutPreviewAlphaValue = value
+            importantForAccessibility = if (value == 0f) {
+                IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+            } else {
+                IMPORTANT_FOR_ACCESSIBILITY_AUTO
+            }
+        }
     var attachAlpha by MultiPropertyDelegate(taskViewAlpha, Alpha.Attach)
     var splitAlpha by MultiPropertyDelegate(taskViewAlpha, Alpha.Split)
     private var modalAlpha by MultiPropertyDelegate(taskViewAlpha, Alpha.Modal)
@@ -685,6 +696,7 @@ constructor(
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (shortcutPreviewAlpha == 0f) return false
         val recentsView = recentsView ?: return false
         val splitSelectStateController = recentsView.splitSelectController
         // Disable taps for split selection animation unless we have a task not being selected
@@ -751,6 +763,7 @@ constructor(
 
         groupTask = null
         viewModel.unbind()
+        shortcutPreviewAlpha = 1f
         attachAlpha = 1f
         splitAlpha = 1f
         splitSplashAlpha = 0f
@@ -1950,6 +1963,7 @@ constructor(
 
         private enum class Alpha {
             Stable,
+            ShortcutPreview,
             Attach,
             Split,
             Modal,
