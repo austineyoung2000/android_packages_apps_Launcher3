@@ -212,6 +212,7 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        updateVisibilities();
         if (!mPrefsRegistered) {
             mPrefs.registerOnSharedPreferenceChangeListener(this);
             mPrefsRegistered = true;
@@ -334,6 +335,12 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
         mSplitButton = findViewById(R.id.action_split);
         if (mSplitButton != null) {
             mSplitButton.setOnClickListener(this);
+        }
+
+        View iconContainer = findViewById(R.id.recents_icon_container);
+        if (iconContainer != null) {
+            iconContainer.setVisibility(LauncherPrefs.RECENTS_ICON_SHORTCUTS.get(getContext())
+                    ? VISIBLE : GONE);
         }
 
         View clearallButton = findViewById(R.id.action_clear_all);
@@ -573,7 +580,7 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
     }
 
     private int getClearAllRowOffset() {
-        View clearAllRow = findViewById(R.id.recents_icon_scroll);
+        View clearAllRow = findViewById(R.id.recents_icon_container);
         if (clearAllRow == null || clearAllRow.getVisibility() == GONE) {
             return 0;
         }
