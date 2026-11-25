@@ -17,6 +17,7 @@ package com.android.quickstep.views;
 
 import static android.app.ActivityTaskManager.INVALID_TASK_ID;
 
+import static com.android.launcher3.LauncherState.BACKGROUND_APP;
 import static com.android.launcher3.LauncherState.CLEAR_ALL_BUTTON;
 import static com.android.launcher3.LauncherState.OVERVIEW;
 import static com.android.launcher3.LauncherState.OVERVIEW_MODAL_TASK;
@@ -147,7 +148,11 @@ public class LauncherRecentsView extends RecentsView<QuickstepLauncher, Launcher
     public void onViewAdded(View child) {
         super.onViewAdded(child);
         if (child instanceof TaskView && mShortcutPreviewMode) {
-            ((TaskView) child).setShortcutPreviewAlpha(0f);
+            TaskView card = (TaskView) child;
+            // The base onViewAdded writes View.alpha directly. Reapply our alpha even
+            // if a reused view already reports shortcutPreviewAlpha == 0.
+            card.setShortcutPreviewAlpha(1f);
+            card.setShortcutPreviewAlpha(0f);
         }
     }
 
@@ -242,12 +247,19 @@ public class LauncherRecentsView extends RecentsView<QuickstepLauncher, Launcher
 
     @Override
     public void onStateTransitionStart(LauncherState toState) {
-        if (toState != OVERVIEW) {
-            resetShortcutPreview();
-        } else if (shortcutAutoHideEnabled()) {
+        if (shortcutAutoHideEnabled() && (toState == OVERVIEW || toState == BACKGROUND_APP)) {
+            // BACKGROUND_APP is the initial state for the app-to-overview animation.
+            // Hide every card before that transition starts, not only at OVERVIEW.
+            removeCallbacks(mHideShortcutPreview);
+            if (toState == BACKGROUND_APP) {
+                ++mShortcutPreviewGeneration;
+                mShortcutPreviewPreparing = false;
+            }
             mShortcutPreviewMode = true;
             mShortcutPreviewCard = null;
             updateShortcutCardVisibility();
+        } else if (toState != OVERVIEW) {
+            resetShortcutPreview();
         }
         setOverviewStateEnabled(toState.isRecentsViewVisible);
 
@@ -363,12 +375,15 @@ public class LauncherRecentsView extends RecentsView<QuickstepLauncher, Launcher
 
     @Override
     public void onGestureAnimationStart(GroupedTaskInfo groupedTaskInfo) {
-        super.onGestureAnimationStart(groupedTaskInfo);
         if (shortcutAutoHideEnabled()) {
             mShortcutPreviewMode = true;
             mShortcutPreviewCard = null;
             updateShortcutCardVisibility();
         }
+        // The base implementation may create the current task and attach new cards.
+        // Arm auto-hide first so onViewAdded also hides those cards immediately.
+        super.onGestureAnimationStart(groupedTaskInfo);
+        if (mShortcutPreviewMode) updateShortcutCardVisibility();
     }
 
     @Override
