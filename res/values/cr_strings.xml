@@ -146,6 +146,8 @@
     <!-- Kill App recents action shortcut -->
     <string name="recent_task_option_kill_app">Kill</string>
     <string name="recents_app_killed">App killed</string>
+    <string name="recents_kill_selected_app">Force stop selected app</string>
+    <string name="recents_kill_app_unavailable">Can’t stop this app</string>
 
     <!-- Hotseat searchbar -->
     <string name="label_search">Search</string>

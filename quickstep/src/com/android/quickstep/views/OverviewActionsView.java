@@ -238,6 +238,7 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
         if ((v = findViewById(R.id.action_split)) != null) v.setOnClickListener(null);
         if ((v = findViewById(R.id.action_save_app_pair)) != null) v.setOnClickListener(null);
         if ((v = findViewById(R.id.action_clear_all)) != null) v.setOnClickListener(null);
+        if ((v = findViewById(R.id.action_kill_app)) != null) v.setOnClickListener(null);
         if ((v = findViewById(R.id.action_lens)) != null) v.setOnClickListener(null);
     }
 
@@ -344,6 +345,9 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
                     ? VISIBLE : GONE);
         }
 
+        View killButton = findViewById(R.id.action_kill_app);
+        if (killButton != null) killButton.setOnClickListener(this);
+
         View clearallButton = findViewById(R.id.action_clear_all);
         if (clearallButton != null) {
             clearallButton.setOnClickListener(this);
@@ -383,6 +387,8 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
             mCallbacks.onSaveAppPair();
         } else if (id == R.id.action_clear_all) {
             mCallbacks.onClearAllTasksRequested();
+        } else if (id == R.id.action_kill_app) {
+            mCallbacks.onKillApp();
         } else if (id == R.id.action_lens) {
             mCallbacks.onLens();
         }

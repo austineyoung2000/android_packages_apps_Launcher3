@@ -19,6 +19,8 @@ package com.android.quickstep;
 import static com.android.quickstep.views.RecentsViewContainer.containerFromContext;
 
 import android.annotation.SuppressLint;
+import android.app.ActivityManagerNative;
+import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Insets;
@@ -27,6 +29,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Build;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -424,6 +427,37 @@ public class TaskOverlayFactory {
             }
 
             @Override
+            public void onKillApp() {
+                final TaskView taskView = getTaskView();
+                final RecentsView<?, ?> recents = taskView.getRecentsView();
+                final ComponentName component = mTask.key.getComponent();
+                if (recents == null || recents.getTaskViewNearestToCenterOfScreen() != taskView
+                        || taskView.getTaskContainers().size() != 1 || component == null
+                        || component.getPackageName().equals(mApplicationContext.getPackageName())
+                        || component.getPackageName().equals("android")) {
+                    Toast.makeText(mApplicationContext, R.string.recents_kill_app_unavailable,
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                final int taskId = mTask.key.id;
+                final int userId = mTask.key.userId;
+                final String packageName = component.getPackageName();
+                endLiveTileMode(() -> {
+                    if (recents.indexOfChild(taskView) < 0 || taskView.getFirstTask() == null
+                            || taskView.getFirstTask().key.id != taskId) return;
+                    try {
+                        ActivityManagerNative.getDefault().forceStopPackage(packageName, userId);
+                        recents.dismissTask(taskId, true /* removeTask */);
+                        Toast.makeText(mApplicationContext, R.string.recents_app_killed,
+                                Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Toast.makeText(mApplicationContext, R.string.recents_kill_app_unavailable,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            @Override
             public void onLens() {
                 if (mIsAllowedByPolicy) {
                     endLiveTileMode(TaskOverlay.this::launchLens);
@@ -449,6 +483,8 @@ public class TaskOverlayFactory {
         void onSaveAppPair();
 
         void onClearAllTasksRequested();
+
+        default void onKillApp() { }
 
         void onLens();
     }
