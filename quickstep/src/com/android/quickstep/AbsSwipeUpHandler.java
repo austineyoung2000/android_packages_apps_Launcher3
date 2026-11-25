@@ -111,6 +111,7 @@ import androidx.annotation.UiThread;
 import androidx.annotation.VisibleForTesting;
 
 import com.android.internal.jank.Cuj;
+import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.AbstractFloatingView;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.Flags;
@@ -386,6 +387,7 @@ public abstract class AbsSwipeUpHandler<
     // Indicates whether the divider is shown, only used when split screen is activated.
     private boolean mIsDividerShown = true;
     private boolean mStartMovingTasks;
+    private boolean mShortcutSurfaceAlphaApplied;
     // Whether the animation to home should be handed off to another handler once the gesture is
     // committed.
     protected boolean mHandOffAnimationToHome = false;
@@ -3120,6 +3122,11 @@ public abstract class AbsSwipeUpHandler<
             mStartMovingTasks = true;
             startInterceptingTouchesForGesture();
         }
+        boolean hideShortcutSurface = (mGestureState.getEndTarget() == RECENTS
+                || mGestureState.getAtomicEndTarget() == RECENTS)
+                && mRecentsView instanceof com.android.quickstep.views.LauncherRecentsView
+                && LauncherPrefs.RECENTS_ICON_SHORTCUTS.get(mContext)
+                && LauncherPrefs.RECENTS_CARD_AUTO_HIDE.get(mContext);
         for (RemoteTargetHandle remoteHandle : mRemoteTargetHandles) {
             AnimatorControllerWithResistance playbackController =
                     remoteHandle.getPlaybackController();
@@ -3133,6 +3140,13 @@ public abstract class AbsSwipeUpHandler<
                     taskViewSimulator.setScroll(scrollOffset);
                 }
                 TransformParams transformParams = remoteHandle.getTransformParams();
+                // The running app is a separate live surface, not the TaskView. Fade it
+                // before it shrinks into a card when shortcut previews start hidden.
+                if (hideShortcutSurface) {
+                    transformParams.setTargetAlpha(Math.max(0f, 1f - progress * 8f));
+                } else if (mShortcutSurfaceAlphaApplied) {
+                    transformParams.setTargetAlpha(1f);
+                }
                 if (shouldFadeOutTargetsForKeyboardQuickSwitch(
                         transformParams, taskViewSimulator, progress)) {
                     continue;
@@ -3140,6 +3154,7 @@ public abstract class AbsSwipeUpHandler<
                 taskViewSimulator.apply(transformParams);
             }
         }
+        mShortcutSurfaceAlphaApplied = notSwipingToHome && hideShortcutSurface;
     }
 
     // Scaling of RecentsView during quick switch based on amount of recents scroll

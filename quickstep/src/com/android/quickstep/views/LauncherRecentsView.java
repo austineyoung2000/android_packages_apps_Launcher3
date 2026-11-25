@@ -105,7 +105,8 @@ public class LauncherRecentsView extends RecentsView<QuickstepLauncher, Launcher
             resetShortcutPreview();
             return;
         }
-        if (mShortcutPreviewMode || mShortcutPreviewPreparing || isGestureActive()) return;
+        if (mShortcutPreviewPreparing || isGestureActive()) return;
+        if (mShortcutPreviewMode && !getEnableDrawingLiveTile()) return;
         mShortcutPreviewPreparing = true;
         final int generation = ++mShortcutPreviewGeneration;
         Runnable hideCards = () -> {
@@ -241,7 +242,13 @@ public class LauncherRecentsView extends RecentsView<QuickstepLauncher, Launcher
 
     @Override
     public void onStateTransitionStart(LauncherState toState) {
-        if (toState != OVERVIEW) resetShortcutPreview();
+        if (toState != OVERVIEW) {
+            resetShortcutPreview();
+        } else if (shortcutAutoHideEnabled()) {
+            mShortcutPreviewMode = true;
+            mShortcutPreviewCard = null;
+            updateShortcutCardVisibility();
+        }
         setOverviewStateEnabled(toState.isRecentsViewVisible);
 
         if (toState.displayOverviewTasksAsGrid(mContainer.getDeviceProfile())) {
@@ -357,6 +364,11 @@ public class LauncherRecentsView extends RecentsView<QuickstepLauncher, Launcher
     @Override
     public void onGestureAnimationStart(GroupedTaskInfo groupedTaskInfo) {
         super.onGestureAnimationStart(groupedTaskInfo);
+        if (shortcutAutoHideEnabled()) {
+            mShortcutPreviewMode = true;
+            mShortcutPreviewCard = null;
+            updateShortcutCardVisibility();
+        }
     }
 
     @Override
