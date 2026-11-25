@@ -48,6 +48,7 @@ import com.android.launcher3.taskbar.TaskbarInteractor;
 import com.android.launcher3.uioverrides.QuickstepLauncher;
 import com.android.launcher3.util.VibratorWrapper;
 import com.android.launcher3.views.ScrimColorsEvaluator;
+import com.android.quickstep.util.CustomRecents;
 import com.android.quickstep.SystemUiProxy;
 import com.android.quickstep.util.AnimatorControllerWithResistance;
 import com.android.quickstep.util.MotionPauseDetector;
@@ -199,6 +200,9 @@ public class NoButtonNavbarToOverviewTouchController extends PortraitStatesTouch
             goToOverviewOrHomeOnDragEnd(velocity);
         } else {
             InteractionJankMonitorWrapper.cancel(Cuj.CUJ_LAUNCHER_APP_SWIPE_TO_RECENTS);
+            if (mMotionPauseDetector.isPaused() && CustomRecents.isEnabled(mLauncher)) {
+                CustomRecents.show(mLauncher);
+            }
             super.onDragEnd(velocity);
         }
 
@@ -231,6 +235,10 @@ public class NoButtonNavbarToOverviewTouchController extends PortraitStatesTouch
 
     private void onMotionPauseDetected() {
         if (mCurrentAnimation == null) {
+            return;
+        }
+        if (CustomRecents.isEnabled(mLauncher)) {
+            VibratorWrapper.INSTANCE.get(mLauncher).vibrate(OVERVIEW_HAPTIC);
             return;
         }
         mNormalToHintOverviewScrimAnimator = null;

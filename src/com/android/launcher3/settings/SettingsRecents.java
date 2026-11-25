@@ -32,6 +32,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceFragmentCompat.OnPreferenceStartFragmentCallback;
@@ -288,6 +289,20 @@ public class SettingsRecents extends CollapsingToolbarBaseActivity
             String key = preference.getKey();
             if (key == null) {
                 return true;
+            }
+
+            if (key.equals("pref_rising_slim_recents_style")) {
+                if (getContext().checkSelfPermission(android.Manifest.permission.WRITE_SECURE_SETTINGS)
+                        != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    return false;
+                }
+                ListPreference style = (ListPreference) preference;
+                style.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
+                style.setValue(Integer.toString(Settings.System.getInt(getContext().getContentResolver(),
+                        "rising_slim_recents_style", 0)));
+                style.setOnPreferenceChangeListener((pref, value) ->
+                        Settings.System.putInt(getContext().getContentResolver(),
+                                "rising_slim_recents_style", Integer.parseInt((String) value)));
             }
 
             LauncherDisplayInfo info = DisplayController.INSTANCE.get(getContext()).getInfo();

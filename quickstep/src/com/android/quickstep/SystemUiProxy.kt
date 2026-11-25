@@ -418,6 +418,11 @@ constructor(
             systemUiProxy?.onOverviewShown(displayId)
         }
 
+    fun showCustomRecents() =
+        executeWithErrorLog({ "Failed call showCustomRecents" }) {
+            systemUiProxy?.showCustomRecents()
+        }
+
     fun onOverviewHidden(displayId: Int, tag: String = TAG) =
         executeWithErrorLog({ "Failed call onOverviewHidden in displayId=$displayId" }, tag = tag) {
             systemUiProxy?.onOverviewHidden(displayId)

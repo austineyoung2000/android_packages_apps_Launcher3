@@ -80,6 +80,7 @@ import com.android.launcher3.touch.BothAxesSwipeDetector;
 import com.android.launcher3.uioverrides.QuickstepLauncher;
 import com.android.launcher3.util.TouchController;
 import com.android.launcher3.util.VibratorWrapper;
+import com.android.quickstep.util.CustomRecents;
 import com.android.quickstep.SystemUiProxy;
 import com.android.quickstep.util.AnimatorControllerWithResistance;
 import com.android.quickstep.util.LayoutUtils;
@@ -339,7 +340,9 @@ public class NoButtonQuickSwitchTouchController implements TouchController,
         boolean horizontalFling = mSwipeDetector.isFling(velocity.x);
         boolean verticalFling = mSwipeDetector.isFling(velocity.y);
         boolean noFling = !horizontalFling && !verticalFling;
-        if (mMotionPauseDetector.isPaused() && noFling) {
+        boolean customRecents = mMotionPauseDetector.isPaused() && noFling
+                && CustomRecents.isEnabled(mLauncher);
+        if (mMotionPauseDetector.isPaused() && noFling && !customRecents) {
             // Going to Overview.
             InteractionJankMonitorWrapper.cancel(Cuj.CUJ_LAUNCHER_QUICK_SWITCH);
 
@@ -367,7 +370,10 @@ public class NoButtonQuickSwitchTouchController implements TouchController,
         cancelAnimations();
 
         final LauncherState targetState;
-        if (horizontalFling && verticalFling) {
+        if (customRecents) {
+            CustomRecents.show(mLauncher);
+            targetState = NORMAL;
+        } else if (horizontalFling && verticalFling) {
             if (velocity.x < 0) {
                 // Flinging left and up or down both go back home.
                 targetState = NORMAL;

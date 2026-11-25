@@ -23,6 +23,15 @@
         android:key="recents_category_general"
         android:title="@string/general_category_title">
 
+        <ListPreference
+            android:key="pref_rising_slim_recents_style"
+            android:title="@string/rising_recents_mode_title"
+            android:entries="@array/rising_recents_mode_entries"
+            android:entryValues="@array/rising_recents_mode_values"
+            android:defaultValue="0"
+            android:persistent="false"
+            launcher:iconSpaceReserved="false" />
+
         <SwitchPreferenceCompat
             android:key="pref_recents_icon_shortcuts"
             android:title="@string/recents_icon_shortcuts_title"

@@ -197,6 +197,9 @@
     <string name="recents_meminfo_title">Memory info</string>
     <string name="recents_meminfo_zram_title">ZRAM info</string>
 
+    <string name="rising_recents_mode_title">Recents style</string>
+    <string-array name="rising_recents_mode_entries"><item>Overview</item><item>Slim Recents</item></string-array>
+    <string-array name="rising_recents_mode_values" translatable="false"><item>0</item><item>1</item></string-array>
     <string name="recents_icon_shortcuts_title">Recent app shortcuts</string>
     <string name="recents_icon_shortcuts_summary">Show a scrollable row of shortcuts to recent app cards</string>
 

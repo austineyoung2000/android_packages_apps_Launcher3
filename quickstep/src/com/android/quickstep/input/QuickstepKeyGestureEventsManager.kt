@@ -41,6 +41,7 @@ import com.android.launcher3.util.DaggerSingletonTracker
 import com.android.launcher3.util.LooperExecutor
 import com.android.launcher3.util.RetryingExecutor
 import com.android.launcher3.util.SettingsCache
+import com.android.quickstep.util.CustomRecents
 import com.android.quickstep.OverviewCommandHelper
 import com.android.quickstep.sysuiconnection.SysUIConnectionTracker
 import com.android.window.flags.Flags
@@ -93,7 +94,11 @@ constructor(
                         ?.addCommand(OverviewCommandHelper.CommandType.HOME, event.displayId)
                 KEY_GESTURE_TYPE_RECENT_APPS -> {
                     if (event.action == ACTION_GESTURE_COMPLETE && !event.isCancelled) {
-                        component.binder.onOverviewShown(triggeredFromAltTab = false)
+                        if (CustomRecents.isEnabled(context)) {
+                            CustomRecents.show(context)
+                        } else {
+                            component.binder.onOverviewShown(triggeredFromAltTab = false)
+                        }
                     }
                 }
                 KEY_GESTURE_TYPE_RECENT_APPS_SWITCHER -> {
