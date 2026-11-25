@@ -1052,6 +1052,8 @@ public abstract class RecentsView<
         // OverviewActionsView related.
         mIs3PLauncher = !mOverviewComponentObserver.isHomeAndOverviewSame();
         mActionsView = actionsView;
+        RecentsIconScrollView iconScroll = actionsView.findViewById(R.id.recents_icon_scroll);
+        if (iconScroll != null) iconScroll.bind(this);
         mActionsView.updateHiddenFlags(HIDDEN_NO_TASKS, !hasTaskViews());
         // Update flags for 1p/3p launchers
         mActionsView.updateFor3pLauncher(mIs3PLauncher);
@@ -1181,6 +1183,7 @@ public abstract class RecentsView<
     public void onViewRemoved(View child) {
         traceBegin(Trace.TRACE_TAG_APP, "RecentsView.onViewRemoved");
         super.onViewRemoved(child);
+        if (child instanceof TaskView) scheduleRecentsIconRefresh();
         // Clear the task data for the removed child if it was visible unless:
         // - It's the initial taskview for entering split screen, we only pretend to dismiss the
         // task
@@ -1209,6 +1212,7 @@ public abstract class RecentsView<
     public void onViewAdded(View child) {
         traceBegin(Trace.TRACE_TAG_APP, "RecentsView.onViewAdded");
         super.onViewAdded(child);
+        if (child instanceof TaskView) scheduleRecentsIconRefresh();
         if (child instanceof TaskView) {
             mTaskViewCount++;
         }
@@ -5780,9 +5784,19 @@ public abstract class RecentsView<
         return mAllowOverScroll;
     }
 
+    private void scheduleRecentsIconRefresh() {
+        if (mActionsView == null) return;
+        RecentsIconScrollView row = mActionsView.findViewById(R.id.recents_icon_scroll);
+        if (row != null) row.scheduleRefresh();
+    }
+
     @Override
     protected void onScrollChanged(int l, int t, int oldl, int oldt) {
         super.onScrollChanged(l, t, oldl, oldt);
+        if (mActionsView != null) {
+            RecentsIconScrollView row = mActionsView.findViewById(R.id.recents_icon_scroll);
+            if (row != null) row.updateSelected();
+        }
         dispatchScrollChanged();
     }
 

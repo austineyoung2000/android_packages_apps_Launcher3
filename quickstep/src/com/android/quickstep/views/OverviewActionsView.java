@@ -144,11 +144,12 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
     private final AnimatedFloat[] mAlphaProperties = new AnimatedFloat[NUM_ALPHAS];
 
     /** Holds MultiValueAlpha values for all actions bars */
-    private final MultiValueAlpha[] mMultiValueAlphas = new MultiValueAlpha[2];
+    private final MultiValueAlpha[] mMultiValueAlphas = new MultiValueAlpha[3];
     /** Index used for single-task actions in the mMultiValueAlphas array */
     private static final int ACTIONS_ALPHAS = 0;
     /** Index used for grouped-task actions in the mMultiValueAlphas array */
     private static final int GROUP_ACTIONS_ALPHAS = 1;
+    private static final int RECENTS_ICONS_ALPHAS = 2;
 
     /** Container for the action buttons below a focused, non-split Overview tile. */
     protected LinearLayout mActionButtons;
@@ -248,7 +249,10 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
         mSaveAppPairButton = findViewById(R.id.action_save_app_pair);
         TypefaceUtils.setTypeface(mSaveAppPairButton, FontFamily.GSF_LABEL_LARGE);
         // Initialize a list to hold alphas for mActionButtons and any group action buttons.
-        mMultiValueAlphas[ACTIONS_ALPHAS] = new MultiValueAlpha(mActionButtons, NUM_ALPHAS);
+        mMultiValueAlphas[ACTIONS_ALPHAS] = new MultiValueAlpha(
+                findViewById(R.id.action_buttons_bottom_row), NUM_ALPHAS);
+        mMultiValueAlphas[RECENTS_ICONS_ALPHAS] = new MultiValueAlpha(
+                findViewById(R.id.recents_icon_scroll), NUM_ALPHAS);
         mMultiValueAlphas[GROUP_ACTIONS_ALPHAS] =
                 new MultiValueAlpha(mSaveAppPairButton, NUM_ALPHAS);
         Arrays.stream(mMultiValueAlphas).forEach(a -> a.setUpdateVisibility(true));
@@ -336,10 +340,6 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
         if (clearallButton != null) {
             clearallButton.setOnClickListener(this);
             clearallButton.setVisibility(mClearAll ? VISIBLE : GONE);
-        }
-        View clearAllRow = findViewById(R.id.clear_all_container);
-        if (clearAllRow != null) {
-            clearAllRow.setVisibility(mClearAll ? VISIBLE : GONE);
         }
 
         View lensButton = findViewById(R.id.action_lens);
@@ -534,7 +534,7 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
      * Returns the visibility of the overview actions buttons.
      */
     public boolean areActionsButtonsVisible() {
-        return mActionButtons.getVisibility() == View.VISIBLE
+        return findViewById(R.id.action_buttons_bottom_row).getVisibility() == View.VISIBLE
                 || mSaveAppPairButton.getVisibility() == View.VISIBLE;
     }
 
@@ -573,7 +573,7 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
     }
 
     private int getClearAllRowOffset() {
-        View clearAllRow = findViewById(R.id.clear_all_container);
+        View clearAllRow = findViewById(R.id.recents_icon_scroll);
         if (clearAllRow == null || clearAllRow.getVisibility() == GONE) {
             return 0;
         }

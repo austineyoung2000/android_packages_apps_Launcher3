@@ -25,28 +25,26 @@
 
     <LinearLayout
         android:id="@+id/action_buttons"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
         android:orientation="vertical">
 
-        <LinearLayout
-            android:id="@+id/clear_all_container"
-            android:layout_width="wrap_content"
+        <com.android.quickstep.views.RecentsIconScrollView
+            android:id="@+id/recents_icon_scroll"
+            android:layout_width="match_parent"
             android:layout_height="@dimen/overview_actions_height"
-            android:layout_gravity="center_horizontal"
             android:layout_marginBottom="@dimen/overview_actions_button_spacing"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:fillViewport="true"
+            android:scrollbars="none">
 
-            <Button
-                android:id="@+id/action_clear_all"
+            <LinearLayout
+                android:id="@+id/recents_icon_row"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:drawableStart="@drawable/ic_clear_all"
-                android:text="@string/recents_clear_all" />
-
-        </LinearLayout>
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="horizontal" />
+        </com.android.quickstep.views.RecentsIconScrollView>
 
         <LinearLayout
             android:id="@+id/action_buttons_bottom_row"
@@ -55,6 +53,14 @@
             android:layout_gravity="center_horizontal"
             android:gravity="center"
             android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/action_clear_all"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/overview_actions_button_spacing"
+                android:drawableStart="@drawable/ic_clear_all"
+                android:text="@string/recents_clear_all" />
 
             <Button
                 android:id="@+id/action_screenshot"
