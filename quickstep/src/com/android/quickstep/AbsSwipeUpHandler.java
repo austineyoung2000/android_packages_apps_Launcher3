@@ -3124,7 +3124,7 @@ public abstract class AbsSwipeUpHandler<
         }
         boolean hideShortcutSurface = (mGestureState.getEndTarget() == RECENTS
                 || mGestureState.getAtomicEndTarget() == RECENTS)
-                && mRecentsView instanceof com.android.quickstep.views.LauncherRecentsView
+                && com.android.quickstep.views.LauncherRecentsView.class.isInstance(mRecentsView)
                 && LauncherPrefs.RECENTS_ICON_SHORTCUTS.get(mContext)
                 && LauncherPrefs.RECENTS_CARD_AUTO_HIDE.get(mContext);
         for (RemoteTargetHandle remoteHandle : mRemoteTargetHandles) {
